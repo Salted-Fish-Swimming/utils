@@ -1,0 +1,1 @@
+const { range, direct } = require('../../src/iterator.js');
