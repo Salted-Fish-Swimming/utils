@@ -1,6 +1,6 @@
 const { Iter, range, direct, zip, concat } = require('../src/iterator.js');
 
-test("Iter head-tail", () => {
+it("Iter head-tail", () => {
   const list = [1, 2, 3, 4, 5];
   const iter = Iter(list);
 
@@ -17,7 +17,7 @@ test("Iter head-tail", () => {
   expect(tail5.tail()).toBe(undefined);
 });
 
-test("Iter Iteration", () => {
+it("Iter Iteration", () => {
   const list = [1, 2, 3, 4, 5];
   const iter = Iter(list);
 
@@ -70,7 +70,7 @@ test("Iter Iteration", () => {
   }
 });
 
-test("range", () => {
+it("range", () => {
   const iter = range(5);
   let i = 0;
   for (const value of iter) {
@@ -78,6 +78,6 @@ test("range", () => {
   }
 });
 
-// test("direct", () => {
+// it("direct", () => {
 //   ;
 // });

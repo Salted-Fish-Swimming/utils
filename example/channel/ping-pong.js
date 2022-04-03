@@ -1,7 +1,7 @@
-const { channel } = require('../../src/channel.js');
+const { Channel } = require('../../src/channel.js');
 const { timeout } = require('../../src/utils.js');
 
-const ch = channel();
+const ch = Channel();
 
 const player = async (name, ch) => {
   while (true) {
@@ -22,7 +22,7 @@ const judge = async (ch) => {
   console.log(`${res.name} babble`);
 }
 
-player("player-1", ch).catch(_ => _);
-player("player-2", ch).catch(_ => _);
+player("player-1", ch).catch(ch.handler);
+player("player-2", ch).catch(ch.handler);
 
 judge(ch);

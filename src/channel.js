@@ -1,15 +1,22 @@
 const { factory } = require('./utils.js');
 
+const ErrorTypeKey = Symbol('error.type');
+
 class ChannelError extends Error {
 
   constructor (msg) {
     super(msg);
     this.name = 'ChannelError';
+    this[ErrorTypeKey] = 'ChannelError';
   }
 
 }
 
-const channel = factory(class {
+const Throw = () => {
+  throw new ChannelError("channel closed");
+}
+
+const Channel = factory(class {
   constructor () {
     this.waiting = [];
     this.pending = [];
@@ -18,9 +25,6 @@ const channel = factory(class {
   }
 
   get () {
-    if (this.closed) {
-      throw new ChannelError("channel on closed");
-    }
     return new Promise((res, rej) => {
       if (this.pending.length > 0) {
         const pend = this.pending.shift();
@@ -32,9 +36,6 @@ const channel = factory(class {
   }
 
   put (value) {
-    if (this.closed) {
-      throw new ChannelError("channel on closed")
-    }
     return new Promise((res, rej) => {
       if (this.waiting.length > 0) {
         const wait = this.waiting.shift();
@@ -53,23 +54,48 @@ const channel = factory(class {
   }
 
   [Symbol.asyncIterator] () {
-    if (this.closed) {
-      throw new ChannelError("channel on closed")
-    }
     const ch = this;
     return (async function* () {
       try {
         while (true) {
           yield await ch.get();
         }
-      } catch (_) {
-        return;
+      } catch (error) {
+        return ch.handler(error);
       }
     })();
   }
 
+  _throw_ () {
+    throw new ChannelError("channel on closed")
+  }
+
+  empty () {
+    if (this.closed) {
+      return false;
+    }
+    if (this.pending.length > 0) {
+      return false
+    }
+    if (this.waiting.length > 0) {
+      return false;
+    }
+    return false;
+  }
+
+  onEmpty () {
+    return new Promise((res, rej) => {
+      res();
+    });
+  }
+
   close (msg) {
-    this.closed = true;
+    // this.closed = true;
+
+    this.put = this._throw_;
+    this.get = this._throw_;
+    this[Symbol.asyncIterator] = async function* () { return };
+
     for (const pend of this.pending) {
       pend.rej(new ChannelError("channel on closed"));
     }
@@ -82,10 +108,26 @@ const channel = factory(class {
   }
 
   onClose () {
+    if (this.closed) {} else {
+      this.close
+    }
     return new Promise((res, rej) => {
       this.onClosed.push({ res, rej });
     });
   }
+
+  handler (error) {
+    return Channel.handler(error);
+  }
 });
 
-module.exports = { channel };
+Channel.handler = (error) => {
+  if (error instanceof ChannelError) {
+    if (error[ErrorTypeKey] === 'ChannelError') {
+      return error;
+    }
+  }
+  throw error;
+}
+
+module.exports = { Channel };

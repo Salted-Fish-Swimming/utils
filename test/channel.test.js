@@ -1,13 +1,13 @@
-const { channel } = require('../src/channel.js');
+const { Channel } = require('../src/channel.js');
 const { range } = require('../src/iterator.js');
 const { timeout } = require('../src/utils.js');
 
-test("生成管道", () => {
-  const ch = channel();
+it("生成管道", () => {
+  const ch = Channel();
 });
 
-test.skip("for-each", async () => {
-  const ch = channel();
+it.skip("for-each", async () => {
+  const ch = Channel();
   (async (ch) => {
     for await (const value of ch) {
       console.log({ value });

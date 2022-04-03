@@ -12,16 +12,10 @@ class ControlError extends Error {
   }
 }
 
-const nest = (iter, next, callback) => {
-  for (const value of iter) {
-    callback();
-  }
-};
 
 const timeout = (time) => (new Promise(res => setTimeout(res, time))) 
 
 module.exports = {
   pipe, compose, factory,
   timeout,
-  ControlError, nest,
 };
