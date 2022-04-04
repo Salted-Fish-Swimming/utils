@@ -12,16 +12,15 @@ class ChannelError extends Error {
 
 }
 
-const Throw = () => {
-  throw new ChannelError("channel closed");
-}
-
 const Channel = factory(class {
   constructor () {
     this.waiting = [];
     this.pending = [];
-    this.onClosed = [];
-    this.closed = false;
+    this.closed = { res () {} };
+    this.onClosed = new Promise((res, rej) => {
+      this.closed.res = res;
+      this.closed.rej = rej;
+    });
   }
 
   get () {
@@ -70,9 +69,9 @@ const Channel = factory(class {
     throw new ChannelError("channel on closed")
   }
 
-  empty () {
+  isEmpty () {
     if (this.closed) {
-      return false;
+      return true;
     }
     if (this.pending.length > 0) {
       return false
@@ -89,12 +88,15 @@ const Channel = factory(class {
     });
   }
 
-  close (msg) {
-    // this.closed = true;
+  isClosed () {
+    ;
+  }
 
-    this.put = this._throw_;
-    this.get = this._throw_;
-    this[Symbol.asyncIterator] = async function* () { return };
+  close (msg) {
+    Object.assign(this, {
+      put: this._throw_, get: this._throw_,
+      [Symbol.asyncIterator]: async function*() {},
+    });
 
     for (const pend of this.pending) {
       pend.rej(new ChannelError("channel on closed"));
@@ -102,18 +104,12 @@ const Channel = factory(class {
     for (const wait of this.waiting) {
       wait.rej(new ChannelError("channel on closed"));
     }
-    for (const close of this.onClosed) {
-      close.res(msg);
-    }
+
+    this.closed.res(msg);
   }
 
   onClose () {
-    if (this.closed) {} else {
-      this.close
-    }
-    return new Promise((res, rej) => {
-      this.onClosed.push({ res, rej });
-    });
+    return this.onClosed;
   }
 
   handler (error) {
